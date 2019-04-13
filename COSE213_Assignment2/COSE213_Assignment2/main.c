@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <Windows.h>
 
@@ -23,7 +24,10 @@ typedef struct _matrixNode {
 	int value;
 	tag type;
 	struct _matrixNode* down;
-	struct _matrixNode* right;
+	union {
+		struct _matrixNode* entry;
+		struct _topNode* top;
+	} right;
 } matrixNode;
 
 typedef struct _topNode {
@@ -46,8 +50,8 @@ matrixNode mtranspose(matrixNode mat);
 
 // functions which uses for other function
 void ClearBuf();
-matrixNode* minit(int row, int col);
-void MakeNode(matrixNode* mat, int row, int col, int value);
+matrixNode* minit(int _row, int _col);
+void MakeNode(matrixNode* mat, int _row, int _col, int _value);
 int UIreader();
 void UImenu(int mode);
 
@@ -89,6 +93,7 @@ void UImenu(int mode)
 	return;
 }
 
+// scan users input and conduct that command
 int UIreader()
 {
 	char _input[LONGEST_COMMAND + 1]; // size is come from longest command char
@@ -107,7 +112,7 @@ int UIreader()
 	{
 		if (nextEmpty == 0)
 		{
-			printf("[WARNING] there are no matrix.");
+			printf("[ERROR] there are no matrix.");
 			return 0;
 		}
 		for (int i = 0; i < nextEmpty; i++)
@@ -122,4 +127,36 @@ int UIreader()
 	else printf("[ERROR] wrong input, try again.");
 
 	return 0;
+}
+
+// make new empty matrix which have _row and _col
+matrixNode* minit(int _row, int _col)
+{
+	if (_row < 1 || _col < 1) // error handling
+	{
+		printf("[ERROR] row and column must be bigger than 0.");
+		return NULL;
+	}
+
+	matrixNode* out = (matrixNode*)malloc(sizeof(matrixNode));
+
+	out->type = header;
+	out->row = _row;
+	out->col = _col;
+	out->value = 0;
+	out->down = NULL;
+
+	int topCount = max(_row, _col);
+	topNode* top = (topNode*)malloc(sizeof(topNode)); // make tops and link them
+	out->right.top = top;
+	for (int i = 0; i < topCount - 1; i++)
+	{
+		topNode* newtop = (topNode*)malloc(sizeof(topNode));
+		newtop->down = NULL;
+		newtop->right = NULL;
+
+		top->next = newtop;
+		top = newtop;
+	}
+	top->next = NULL; // last top's next will be NULL
 }
