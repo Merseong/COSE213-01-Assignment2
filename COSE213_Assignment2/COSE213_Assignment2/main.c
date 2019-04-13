@@ -36,7 +36,7 @@ typedef struct _topNode {
 	matrixNode* right;
 } topNode;
 
-matrixNode* matrices[MAX_MATRICES]; // headers of all matrix
+matrixNode* matrices[MAX_MATRICES]; // array of headers of all matrix
 int nextEmpty = 0;
 int matCount = 0;
 
@@ -159,4 +159,9 @@ matrixNode* minit(int _row, int _col)
 		top = newtop;
 	}
 	top->next = NULL; // last top's next will be NULL
+
+	matrices[nextEmpty++] = out;
+	matCount++;
+
+	return out;
 }
