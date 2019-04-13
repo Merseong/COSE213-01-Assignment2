@@ -41,7 +41,7 @@ int nextEmpty = 0;
 int matCount = 0;
 
 // functions which can use on consol UI
-matrixNode* mread(matrixNode* mat);
+matrixNode* mread();
 void mwrite(matrixNode mat);
 void merase(matrixNode* mat);
 matrixNode madd(matrixNode left, matrixNode right);
@@ -51,7 +51,7 @@ matrixNode mtranspose(matrixNode mat);
 // functions which uses for other function
 void ClearBuf();
 matrixNode* minit(int _row, int _col);
-void MakeNode(matrixNode* mat, int _row, int _col, int _value);
+int MakeEntry(matrixNode* mat, int _row, int _col, int _value);
 int UIreader();
 void UImenu(int mode);
 
@@ -88,6 +88,7 @@ void UImenu(int mode)
 		printf("弛 quit: turn off this program\n");
 		printf("弛 cls: clear screen and show main menu\n");
 		printf("弛 allmat: see all matrices with list\n");
+		printf("弛 mread: read in sparse matrix and make it\n");
 		printf("弛\n戌式式式式式  Command Help END\n");
 	}
 	return;
@@ -115,15 +116,16 @@ int UIreader()
 			printf("[ERROR] there are no matrix.");
 			return 0;
 		}
-		for (int i = 0; i < nextEmpty; i++)
+		for (int i = 0; i < nextEmpty; ++i)
 		{
 			if (matrices[i] != NULL)
 			{
-				printf(" index %d, %d x %d, %d elements\n", i, matrices[i]->row, matrices[i]->col, matrices[i]->value);
+				printf(" index [%d], %d x %d, %d elements\n", i, matrices[i]->row, matrices[i]->col, matrices[i]->value);
 
 			}
 		}
 	}
+	else if (!strcmp(_input, "mread")) mread();
 	else printf("[ERROR] wrong input, try again.");
 
 	return 0;
@@ -149,7 +151,7 @@ matrixNode* minit(int _row, int _col)
 	int topCount = max(_row, _col);
 	topNode* top = (topNode*)malloc(sizeof(topNode)); // make tops and link them
 	out->right.top = top;
-	for (int i = 0; i < topCount - 1; i++)
+	for (int i = 0; i < topCount - 1; ++i)
 	{
 		topNode* newtop = (topNode*)malloc(sizeof(topNode));
 		newtop->down = NULL;
@@ -162,6 +164,40 @@ matrixNode* minit(int _row, int _col)
 
 	matrices[nextEmpty++] = out;
 	matCount++;
+
+	return out;
+}
+
+// read in sparse matrix and make it
+matrixNode* mread()
+{
+	int _row, _col, _ele;
+	printf(" Enter the number of rows, columns and number of elements(nonzero terms)\n\t>>> ");
+	scanf("%d %d %d", &_row, &_col, &_ele);
+
+	matrixNode* out = minit(_row, _col);
+	if (out == NULL) return NULL;
+	else if (_ele > _row * _col)
+	{
+		printf("[ERROR] number of element is bigger than number of row * column");
+		return NULL;
+	}
+	out->value = _ele;
+
+	printf(" Enter the row, column, value of term.\n");
+	for (int i = 0; i < _ele; ++i)
+	{
+		int t_row, t_col, t_val; // term's row, col, value
+		printf("\t>>> ");
+		scanf("%d %d %d", &t_row, &t_col, &t_val);
+		/*if (MakeEntry(out, t_row, t_col, t_val))
+		{
+			printf("[ERROR] wrong input about row, col. try again.");
+			--i; continue;
+		}*/
+	}
+
+	//mwrite(*out);
 
 	return out;
 }
