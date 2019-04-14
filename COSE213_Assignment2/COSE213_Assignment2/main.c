@@ -3,7 +3,7 @@
 #include <string.h>
 #include <Windows.h>
 
-#define LONGEST_COMMAND 6
+#define LONGEST_COMMAND 10
 #define MAX_MATRICES 50
 
 /*
@@ -144,7 +144,7 @@ int UIreader()
 	else if (!strcmp(_input, "madd"))
 	{
 		int _left, _right;
-		printf(" type two indexes to add.\n\t>>> ");
+		printf(" type two indexes of matrices to add.\n\t>>> ");
 		scanf("%d %d", &_left, &_right);
 		if (matrices[_left] != NULL && matrices[_right] != NULL)
 		{
@@ -169,7 +169,7 @@ int UIreader()
 	else if (!strcmp(_input, "mmult"))
 	{
 		int _left, _right;
-		printf(" type two indexes to multiply.\n\t>>> ");
+		printf(" type two indexes of matrices to multiply.\n\t>>> ");
 		scanf("%d %d", &_left, &_right);
 		if (matrices[_left] != NULL && matrices[_right] != NULL)
 		{
@@ -565,6 +565,32 @@ matrixNode* mmult(matrixNode* left, matrixNode* right)
 		currentTopR = right->right.top;
 		if (currentTopL != NULL) currentNodeL = currentTopL->right;
 		if (currentTopR != NULL) currentNodeR = currentTopR->down;
+	}
+
+	mwrite(out);
+	return out;
+}
+
+// return transposed matrix
+matrixNode* mtranspose(matrixNode* mat)
+{
+	matrixNode* out = minit(mat->col, mat->row);
+	out->value = mat->value;
+
+	topNode* currentTop = mat->right.top;
+	matrixNode* currentNode = currentTop->right;
+	while (currentTop != NULL)
+	{
+		if (currentNode != NULL)
+		{
+			MakeEntry(out, currentNode->col, currentNode->row, currentNode->value);
+			currentNode = currentNode->right.entry;
+		}
+		else
+		{
+			currentTop = currentTop->next;
+			if (currentTop != NULL) currentNode = currentTop->right;
+		}
 	}
 
 	mwrite(out);
