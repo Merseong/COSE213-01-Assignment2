@@ -45,9 +45,9 @@ int matCount = 0;
 matrixNode* mread();
 void mwrite(matrixNode* mat);
 void merase(matrixNode* mat);
-matrixNode madd(matrixNode left, matrixNode right);
-matrixNode mmult(matrixNode left, matrixNode right);
-matrixNode mtranspose(matrixNode mat);
+matrixNode* madd(matrixNode* left, matrixNode* right);
+matrixNode* mmult(matrixNode* left, matrixNode* right);
+matrixNode* mtranspose(matrixNode* mat);
 
 // functions which uses for other function
 void ClearBuf();
@@ -91,6 +91,7 @@ void UImenu(int mode)
 		printf("弛 allmat: See all matrices with list\n");
 		printf("弛 mread: Read in sparse matrix and make it\n");
 		printf("弛 mwrite: Write out a sparse matrix\n");
+		printf("弛 madd: Create the sparse matrix d = a + b\n");
 		printf("弛\n戌式式式式式  Command Help END\n");
 	}
 	return;
@@ -136,6 +137,17 @@ int UIreader()
 		ClearBuf();
 		if (matrices[matIndex] != NULL) mwrite(matrices[matIndex]);
 		else printf("[ERROR] there are no matrix in that index.\n");
+	}
+	else if (!strcmp(_input, "madd"))
+	{
+		int _left, _right;
+		printf(" type two indexes to add.\n\t>>> ");
+		scanf("%d %d", &_left, &_right);
+		if (matrices[_left] != NULL && matrices[_right] != NULL)
+		{
+			madd(matrices[_left], matrices[_right]);
+		}
+		else printf("[ERROR] invalid indexes.\n");
 	}
 	else printf("[ERROR] wrong input, try again.\n");
 
@@ -360,3 +372,70 @@ int MakeEntry(matrixNode* mat, int _row, int _col, int _value)
 	return 0;
 }
 
+// add two matrices and make new matrix
+matrixNode* madd(matrixNode* left, matrixNode* right)
+{
+	if ((left->col != right->col) || (left->row != right->row))
+	{
+		printf("[ERROR] two inputs do not have same size of row and column.\n");
+		return NULL;
+	}
+
+	matrixNode* out = minit(left->row, left->col);
+
+	topNode* currentTopL = left->right.top;
+	topNode* currentTopR = right->right.top;
+	matrixNode* currentNodeL = currentTopL->right;
+	matrixNode* currentNodeR = currentTopR->right;
+	while (currentTopL != NULL)
+	{
+		if (currentNodeL != NULL && currentNodeR != NULL)
+		{
+			if (currentNodeL->col < currentNodeR->col)
+			{
+				MakeEntry(out, currentNodeL->row, currentNodeL->col, currentNodeL->value);
+				currentNodeL = currentNodeL->right.entry;
+				out->value++;
+			}
+			else if (currentNodeL->col == currentNodeR->col)
+			{
+				int _val = currentNodeL->value + currentNodeR->value;
+				if (_val != 0)
+				{
+					MakeEntry(out, currentNodeL->row, currentNodeL->col, _val);
+					currentNodeL = currentNodeL->right.entry;
+					currentNodeR = currentNodeR->right.entry;
+					out->value++;
+				}
+			}
+			else // NodeL->col > NodeR->col
+			{
+				MakeEntry(out, currentNodeR->row, currentNodeR->col, currentNodeR->value);
+				currentNodeR = currentNodeR->right.entry;
+				out->value++;
+			}
+		}
+		else if (currentNodeL != NULL)
+		{
+			MakeEntry(out, currentNodeL->row, currentNodeL->col, currentNodeL->value);
+			currentNodeL = currentNodeL->right.entry;
+			out->value++;
+		}
+		else if (currentNodeR != NULL)
+		{
+			MakeEntry(out, currentNodeR->row, currentNodeR->col, currentNodeR->value);
+			currentNodeR = currentNodeR->right.entry;
+			out->value++;
+		}
+		else // both node is NULL
+		{
+			currentTopL = currentTopL->next;
+			currentTopR = currentTopR->next;
+			if (currentTopL != NULL) currentNodeL = currentTopL->right;
+			if (currentTopR != NULL) currentNodeR = currentTopR->right;
+		}
+	}
+
+	mwrite(out);
+	return out;
+}
