@@ -44,7 +44,7 @@ int matCount = 0;
 // functions which can use on consol UI
 matrixNode* mread();
 void mwrite(matrixNode* mat);
-void merase(matrixNode* mat);
+void merase(matrixNode* mat, int index);
 matrixNode* madd(matrixNode* left, matrixNode* right);
 matrixNode* mmult(matrixNode* left, matrixNode* right);
 matrixNode* mtranspose(matrixNode* mat);
@@ -52,6 +52,7 @@ matrixNode* mtranspose(matrixNode* mat);
 // functions which uses for other function
 void ClearBuf();
 matrixNode* minit(int _row, int _col);
+void TermErase(matrixNode* Term);
 int MakeEntry(matrixNode* mat, int _row, int _col, int _value);
 int UIreader();
 void UImenu(int mode);
@@ -89,6 +90,7 @@ void UImenu(int mode)
 		printf("¦¢ quit: Turn off this program\n");
 		printf("¦¢ cls: Clear screen and show main menu\n");
 		printf("¦¢ allmat: See all matrices with list\n");
+		printf("¦¢ merase: Erase a sparse matrix\n");
 		printf("¦¢ mread: Read in sparse matrix and make it\n");
 		printf("¦¢ mwrite: Write out a sparse matrix\n");
 		printf("¦¢ madd: Create the sparse matrix d = a + b\n");
@@ -114,17 +116,16 @@ int UIreader()
 	else if (!strcmp(_input, "quit")) return 1;
 	else if (!strcmp(_input, "allmat"))
 	{
-		if (nextEmpty == 0)
+		if (matCount == 0)
 		{
-			printf("[ERROR] there are no matrix.\n");
+			printf(" there are no matrix.\n");
 			return 0;
 		}
 		for (int i = 0; i < nextEmpty; ++i)
 		{
 			if (matrices[i] != NULL)
 			{
-				printf(" index [%d], %d x %d, %d elements\n", i, matrices[i]->row, matrices[i]->col, matrices[i]->value);
-
+				printf(" index [%d], %d x %d, %d non-zero elements\n", i, matrices[i]->row, matrices[i]->col, matrices[i]->value);
 			}
 		}
 	}
@@ -148,6 +149,20 @@ int UIreader()
 			madd(matrices[_left], matrices[_right]);
 		}
 		else printf("[ERROR] invalid indexes.\n");
+	}
+	else if (!strcmp(_input, "merase"))
+	{
+		int _index;
+		printf(" type index of matrix which you want to erase.\n\t>>> ");
+		scanf("%d", &_index);
+		if (matrices[_index] != NULL)
+		{
+			merase(matrices[_index], _index);
+		}
+		else
+		{
+			printf("[ERROR] there are no matrix in that index.\n");
+		}
 	}
 	else printf("[ERROR] wrong input, try again.\n");
 
@@ -195,6 +210,37 @@ matrixNode* minit(int _rowSize, int _colSize)
 	return out;
 }
 
+// free the matrix
+void merase(matrixNode* mat, int index)
+{
+	// erase at array matrices
+	matrices[index] = NULL;
+	if (index == --matCount) nextEmpty--;
+
+	for (topNode* top = mat->right.top; top != NULL;)
+	{
+		TermErase(top->right); // free terms in top
+		topNode* tmp_top = top->next;
+		free(top); // free top
+		top = tmp_top;
+	}
+
+	// free header
+	free(mat);
+
+	printf(" done erasing matrix index [%d]\n", index);
+}
+
+// recursively erases terms linked with row
+void TermErase(matrixNode* term)
+{
+	if (term != NULL)
+	{
+		TermErase(term->right.entry);
+		free(term);
+	}
+}
+
 // read in sparse matrix and make it
 matrixNode* mread()
 {
@@ -204,7 +250,7 @@ matrixNode* mread()
 	ClearBuf();
 	if (_ele > _row * _col)
 	{
-		printf("[ERROR] number of element is bigger than number of row * column.\n");
+		printf("[ERROR] number of non-zero element is bigger than number of row * column.\n");
 		return NULL;
 	}
 
@@ -245,7 +291,7 @@ void mwrite(matrixNode* mat)
 			break;
 		}
 	}
-	printf("\n index [%d], %d x %d, %d elements\n\n", index, mat->row, mat->col, mat->value);
+	printf("\n index [%d], %d x %d, %d non-zero elements\n\n", index, mat->row, mat->col, mat->value);
 
 	for (int rowCnt = 0; rowCnt < mat->row; ++rowCnt)
 	{
@@ -403,10 +449,10 @@ matrixNode* madd(matrixNode* left, matrixNode* right)
 				if (_val != 0)
 				{
 					MakeEntry(out, currentNodeL->row, currentNodeL->col, _val);
-					currentNodeL = currentNodeL->right.entry;
-					currentNodeR = currentNodeR->right.entry;
 					out->value++;
 				}
+				currentNodeL = currentNodeL->right.entry;
+				currentNodeR = currentNodeR->right.entry;
 			}
 			else // NodeL->col > NodeR->col
 			{
