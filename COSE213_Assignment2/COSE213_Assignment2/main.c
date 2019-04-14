@@ -23,7 +23,7 @@ typedef struct _matrixNode {
 	int col;
 	int value;
 	tag type;
-	struct _matrixNode* down;
+	struct _matrixNode* down; // if type is header, down is pointing first top-left term.
 	union {
 		struct _matrixNode* entry;
 		struct _topNode* top;
@@ -31,6 +31,7 @@ typedef struct _matrixNode {
 } matrixNode;
 
 typedef struct _topNode {
+	int number;
 	struct _topNode* next;
 	matrixNode* down;
 	matrixNode* right;
@@ -42,7 +43,7 @@ int matCount = 0;
 
 // functions which can use on consol UI
 matrixNode* mread();
-void mwrite(matrixNode mat);
+void mwrite(matrixNode* mat);
 void merase(matrixNode* mat);
 matrixNode madd(matrixNode left, matrixNode right);
 matrixNode mmult(matrixNode left, matrixNode right);
@@ -84,11 +85,12 @@ void UImenu(int mode)
 	else if (mode) // command help
 	{
 		printf("忙式式式式式  Command Help\n弛\n");
-		printf("弛 help: browse commands\n");
-		printf("弛 quit: turn off this program\n");
-		printf("弛 cls: clear screen and show main menu\n");
-		printf("弛 allmat: see all matrices with list\n");
-		printf("弛 mread: read in sparse matrix and make it\n");
+		printf("弛 help: Browse commands\n");
+		printf("弛 quit: Turn off this program\n");
+		printf("弛 cls: Clear screen and show main menu\n");
+		printf("弛 allmat: See all matrices with list\n");
+		printf("弛 mread: Read in sparse matrix and make it\n");
+		printf("弛 mwrite: Write out a sparse matrix\n");
 		printf("弛\n戌式式式式式  Command Help END\n");
 	}
 	return;
@@ -113,7 +115,7 @@ int UIreader()
 	{
 		if (nextEmpty == 0)
 		{
-			printf("[ERROR] there are no matrix.");
+			printf("[ERROR] there are no matrix.\n");
 			return 0;
 		}
 		for (int i = 0; i < nextEmpty; ++i)
@@ -126,36 +128,49 @@ int UIreader()
 		}
 	}
 	else if (!strcmp(_input, "mread")) mread();
-	else printf("[ERROR] wrong input, try again.");
+	else if (!strcmp(_input, "mwrite"))
+	{
+		int matIndex;
+		printf(" Enter the index of matrix you want to view.\n\t>>> ");
+		scanf("%d", &matIndex);
+		ClearBuf();
+		if (matrices[matIndex] != NULL) mwrite(matrices[matIndex]);
+		else printf("[ERROR] there are no matrix in that index.\n");
+	}
+	else printf("[ERROR] wrong input, try again.\n");
 
 	return 0;
 }
 
-// make new empty matrix which have _row and _col
-matrixNode* minit(int _row, int _col)
+// make new empty matrix which have _rowSize and _colSize
+matrixNode* minit(int _rowSize, int _colSize)
 {
-	if (_row < 1 || _col < 1) // error handling
+	if (_rowSize < 1 || _colSize < 1) // error when invalid size
 	{
-		printf("[ERROR] row and column must be bigger than 0.");
+		printf("[ERROR] row and column must be bigger than 0.\n");
 		return NULL;
 	}
 
 	matrixNode* out = (matrixNode*)malloc(sizeof(matrixNode));
 
 	out->type = header;
-	out->row = _row;
-	out->col = _col;
+	out->row = _rowSize;
+	out->col = _colSize;
 	out->value = 0;
 	out->down = NULL;
 
-	int topCount = max(_row, _col);
+	int topCount = max(_rowSize, _colSize);
 	topNode* top = (topNode*)malloc(sizeof(topNode)); // make tops and link them
 	out->right.top = top;
+	top->down = NULL;
+	top->right = NULL;
+	top->number = 0;
 	for (int i = 0; i < topCount - 1; ++i)
 	{
 		topNode* newtop = (topNode*)malloc(sizeof(topNode));
 		newtop->down = NULL;
 		newtop->right = NULL;
+		newtop->number = i + 1;
 
 		top->next = newtop;
 		top = newtop;
@@ -172,32 +187,176 @@ matrixNode* minit(int _row, int _col)
 matrixNode* mread()
 {
 	int _row, _col, _ele;
-	printf(" Enter the number of rows, columns and number of elements(nonzero terms)\n\t>>> ");
+	printf(" Enter the size of rows, columns and the number of elements(nonzero terms)\n\t>>> ");
 	scanf("%d %d %d", &_row, &_col, &_ele);
+	ClearBuf();
+	if (_ele > _row * _col)
+	{
+		printf("[ERROR] number of element is bigger than number of row * column.\n");
+		return NULL;
+	}
 
 	matrixNode* out = minit(_row, _col);
 	if (out == NULL) return NULL;
-	else if (_ele > _row * _col)
-	{
-		printf("[ERROR] number of element is bigger than number of row * column");
-		return NULL;
-	}
 	out->value = _ele;
 
-	printf(" Enter the row, column, value of term.\n");
+	printf(" Enter the term's row, column and value.(row and column is zero-based)\n");
 	for (int i = 0; i < _ele; ++i)
 	{
 		int t_row, t_col, t_val; // term's row, col, value
 		printf("\t>>> ");
 		scanf("%d %d %d", &t_row, &t_col, &t_val);
-		/*if (MakeEntry(out, t_row, t_col, t_val))
+		ClearBuf();
+		if (MakeEntry(out, t_row, t_col, t_val))
 		{
-			printf("[ERROR] wrong input about row, col. try again.");
 			--i; continue;
-		}*/
+		}
 	}
 
-	//mwrite(*out);
+	mwrite(out);
 
 	return out;
 }
+
+// print matrix
+void mwrite(matrixNode* mat)
+{
+	matrixNode* currentNode = mat->down;
+	topNode* currentTop = mat->right.top;
+
+	int index = -1;
+	for (int i = 0; i < nextEmpty; i++)
+	{
+		if (matrices[i] == mat)
+		{
+			index = i;
+			break;
+		}
+	}
+	printf("\n index [%d], %d x %d, %d elements\n\n", index, mat->row, mat->col, mat->value);
+
+	for (int rowCnt = 0; rowCnt < mat->row; ++rowCnt)
+	{
+		printf(" | ");
+		for (int colCnt = 0; colCnt < mat->col; ++colCnt)
+		{
+			if (currentNode != NULL && currentNode->row == rowCnt && currentNode->col == colCnt)
+			{
+				printf("%2d ", currentNode->value);
+				currentNode = currentNode->right.entry;
+			}
+			else printf(" 0 ");
+		}
+		printf(" |\n");
+		if (currentTop->next != NULL) currentTop = currentTop->next;
+		if (currentNode == NULL) currentNode = currentTop->right;
+	}
+}
+
+// make new Entry and put this in to matrix.
+int MakeEntry(matrixNode* mat, int _row, int _col, int _value)
+{
+	// error when row and col is out of range
+	if (mat->row <= _row || mat->col <= _col)
+	{
+		printf("[ERROR] row and col must be smaller than matrix's rowSize and colSize. try again.\n");
+		return -1;
+	}
+	// error when value is zero
+	if (_value == 0)
+	{
+		printf("[ERROR] your input is zero term. type non-zero term again.\n");
+		return -1;
+	}
+
+	matrixNode* newEntry = (matrixNode*)malloc(sizeof(matrixNode));
+	
+	newEntry->type = entry;
+	newEntry->row = _row;
+	newEntry->col = _col;
+	newEntry->value = _value;
+
+	topNode* rowTop = mat->right.top;
+	topNode* colTop = mat->right.top;
+	while (rowTop->next != NULL && rowTop->number != _row) rowTop = rowTop->next;
+	while (colTop->next != NULL && colTop->number != _col) colTop = colTop->next;
+	
+	// when this is first term
+	if (mat->down == NULL)
+	{
+		mat->down = newEntry;
+		newEntry->down = NULL;
+		newEntry->right.entry = NULL;
+		rowTop->right = newEntry;
+		colTop->down = newEntry;
+	}
+	else
+	{
+		newEntry->down = NULL;
+		newEntry->right.entry = NULL;
+
+		matrixNode* rowBefore = NULL;
+		matrixNode* rowNext = rowTop->right;
+		matrixNode* colBefore = NULL;
+		matrixNode* colNext = colTop->down;
+
+		while (newEntry->right.entry == NULL) // sort row
+		{
+			if (rowNext != NULL)
+			{
+				if (rowNext->col > _col)
+				{
+					newEntry->right.entry = rowNext;
+					if (rowBefore != NULL) rowBefore->right.entry = newEntry;
+					else rowTop->right = newEntry; // when this term is first right term of that top node
+				}
+				else if (rowNext->col == _col) // same position
+				{
+					printf("[ERROR] there are already other term. try another.\n");
+					free(newEntry);
+					return -1;
+				}
+				else // rowNext->col < _col
+				{
+					rowBefore = rowNext;
+					rowNext = rowNext->right.entry;
+				}
+			}
+			else // first term of that empty top node or last term
+			{
+				if (rowBefore != NULL) rowBefore->right.entry = newEntry; // last term of top node
+				else rowTop->right = newEntry; // first term of that empty top node
+				break;
+			}
+		}
+
+		while (newEntry->down == NULL)
+		{
+			if (colNext != NULL)
+			{
+				if (colNext->row > _row)
+				{
+					newEntry->down = colNext;
+					if (colBefore != NULL) colBefore->down = newEntry;
+					else colTop->down = newEntry;
+				}
+				else // colNext->row < _row
+				{
+					colBefore = colNext;
+					colNext = colNext->down;
+				}
+			}
+			else
+			{
+				if (colBefore != NULL) colBefore->down = newEntry;
+				else colTop->down = newEntry;
+				break;
+			}
+		}
+
+		if (mat->down->row > _row) mat->down = newEntry;
+		else if (mat->down->row == _row && mat->down->col > _col) mat->down = newEntry;
+	}
+	return 0;
+}
+
