@@ -94,6 +94,8 @@ void UImenu(int mode)
 		printf("弛 mread: Read in sparse matrix and make it\n");
 		printf("弛 mwrite: Write out a sparse matrix\n");
 		printf("弛 madd: Create the sparse matrix d = a + b\n");
+		printf("弛 mmult: Create the sparse matrix d = a * b\n");
+		printf("弛 mtranspose: Create the sparse matrix b = a^T\n");
 		printf("弛\n戌式式式式式  Command Help END\n");
 	}
 	return;
@@ -163,6 +165,28 @@ int UIreader()
 		{
 			printf("[ERROR] there are no matrix in that index.\n");
 		}
+	}
+	else if (!strcmp(_input, "mmult"))
+	{
+		int _left, _right;
+		printf(" type two indexes to multiply.\n\t>>> ");
+		scanf("%d %d", &_left, &_right);
+		if (matrices[_left] != NULL && matrices[_right] != NULL)
+		{
+			mmult(matrices[_left], matrices[_right]);
+		}
+		else printf("[ERROR] invalid indexes.\n");
+	}
+	else if (!strcmp(_input, "mtranspose"))
+	{
+		int _mat;
+		printf(" type index of matrix to transpose.\n\t>>> ");
+		scanf("%d", &_mat);
+		if (matrices[_mat] != NULL)
+		{
+			mtranspose(matrices[_mat]);
+		}
+		else printf("[ERROR] invalid indexes.\n");
 	}
 	else printf("[ERROR] wrong input, try again.\n");
 
@@ -480,6 +504,67 @@ matrixNode* madd(matrixNode* left, matrixNode* right)
 			if (currentTopL != NULL) currentNodeL = currentTopL->right;
 			if (currentTopR != NULL) currentNodeR = currentTopR->right;
 		}
+	}
+
+	mwrite(out);
+	return out;
+}
+
+// multiply two matrices and make new matrix
+matrixNode* mmult(matrixNode* left, matrixNode* right)
+{
+	if (left->col != right->row) // error detect
+	{
+		printf("[ERROR] when multiply two matrices, left-side's column and right-side's row must be same.\n");
+		return NULL;
+	}
+
+	matrixNode* out = minit(left->row, right->col);
+
+	topNode* currentTopL = left->right.top; // row
+	topNode* currentTopR = right->right.top; // column
+	matrixNode* currentNodeL = currentTopL->right;
+	matrixNode* currentNodeR = currentTopR->down;
+	int sum = 0;
+	while (currentTopL != NULL)
+	{
+		while (currentTopR != NULL)
+		{
+			if (currentNodeL != NULL && currentNodeR != NULL)
+			{
+				if (currentNodeL->col < currentNodeR->row)
+				{
+					currentNodeL = currentNodeL->right.entry;
+				}
+				else if (currentNodeL->col == currentNodeR->row)
+				{
+					sum += currentNodeL->value * currentNodeR->value;
+					currentNodeL = currentNodeL->right.entry;
+					currentNodeR = currentNodeR->down;
+				}
+				else // NodeL->col > NodeR->row
+				{
+					currentNodeR = currentNodeR->down;
+				}
+			}
+			else // one of nodes is NULL
+			{
+				if (sum != 0)
+				{
+					MakeEntry(out, currentTopL->number, currentTopR->number, sum);
+					out->value++;
+				}
+				sum = 0;
+				
+				currentTopR = currentTopR->next;
+				if (currentTopL != NULL) currentNodeL = currentTopL->right;
+				if (currentTopR != NULL) currentNodeR = currentTopR->down;
+			}
+		}
+		currentTopL = currentTopL->next;
+		currentTopR = right->right.top;
+		if (currentTopL != NULL) currentNodeL = currentTopL->right;
+		if (currentTopR != NULL) currentNodeR = currentTopR->down;
 	}
 
 	mwrite(out);
