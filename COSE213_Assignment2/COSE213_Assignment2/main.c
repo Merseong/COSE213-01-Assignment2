@@ -319,17 +319,14 @@ void mwrite(matrixNode* mat)
 
 	for (int rowCnt = 0; rowCnt < mat->row; ++rowCnt)
 	{
-		printf(" | ");
 		for (int colCnt = 0; colCnt < mat->col; ++colCnt)
 		{
 			if (currentNode != NULL && currentNode->row == rowCnt && currentNode->col == colCnt)
 			{
-				printf("%2d ", currentNode->value);
+				printf(" | row: %2d | column: %2d | value: %2d |\n", currentNode->row, currentNode->col, currentNode->value);
 				currentNode = currentNode->right.entry;
 			}
-			else printf(" 0 ");
 		}
-		printf(" |\n");
 		if (currentTop->next != NULL) currentTop = currentTop->next;
 		if (currentNode == NULL) currentNode = currentTop->right;
 	}
