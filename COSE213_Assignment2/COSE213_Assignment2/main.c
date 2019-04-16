@@ -115,7 +115,19 @@ int UIreader()
 		system("cls");
 		UImenu(0);
 	}
-	else if (!strcmp(_input, "quit")) return 1;
+	else if (!strcmp(_input, "quit"))
+	{
+		int i = 0;
+		while (matCount != 0 && i < MAX_MATRICES + 1)
+		{
+			if (matrices[i] != NULL)
+			{
+				merase(matrices[i], i);
+			}
+			i++;
+		}
+		return 1;
+	}
 	else if (!strcmp(_input, "allmat"))
 	{
 		if (matCount == 0)
