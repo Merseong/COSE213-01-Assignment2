@@ -286,11 +286,19 @@ matrixNode* mread()
 	printf(" Enter the size of rows, columns and the number of elements(nonzero terms)\n\t>>> ");
 	scanf("%d %d %d", &_row, &_col, &_ele);
 	ClearBuf();
-	if (_ele > _row * _col)
+
+	// error handle
+	if (_ele <= 0 || _row <= 0 || _col <= 0)
+	{
+		printf("[ERROR] input about size must be positive natural number.\n");
+		return NULL;
+	}
+	else if (_ele > _row * _col)
 	{
 		printf("[ERROR] number of non-zero element is bigger than number of row * column.\n");
 		return NULL;
 	}
+	
 
 	matrixNode* out = minit(_row, _col);
 	if (out == NULL) return NULL;
@@ -355,8 +363,13 @@ int MakeEntry(matrixNode* mat, int _row, int _col, int _value)
 		printf("[ERROR] row and col must be smaller than matrix's rowSize and colSize. try again.\n");
 		return -1;
 	}
+	else if (_row < 0 || _col < 0)
+	{
+		printf("[ERROR] row and column must be positive. try again.\n");
+		return -1;
+	}
 	// error when value is zero
-	if (_value == 0)
+	else if (_value == 0)
 	{
 		printf("[ERROR] your input is zero term. type non-zero term again.\n");
 		return -1;
