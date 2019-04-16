@@ -79,9 +79,11 @@ void UImenu(int mode)
 {
 	if (!mode) // main menu
 	{
-		printf("┌──────────────────────────────────┐\n");
-		printf("│     Sparse Matrix Calculator     │\n");
-		printf("└──────────────────────────────────┘\n");
+		printf("┌─────────────────────────────────────────────┐\n");
+		printf("│           Sparse Matrix Calculator          │\n");
+		printf("│     2019-1 Data Structure Assignment #2     │\n");
+		printf("│         2018320205 컴퓨터학과 신대성        │\n");
+		printf("└─────────────────────────────────────────────┘\n");
 	}
 	else if (mode) // command help
 	{
