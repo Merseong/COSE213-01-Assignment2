@@ -218,6 +218,7 @@ matrixNode* minit(int _rowSize, int _colSize)
 
 	matrixNode* out = (matrixNode*)malloc(sizeof(matrixNode));
 
+	// set inital value of new matrix
 	out->type = header;
 	out->row = _rowSize;
 	out->col = _colSize;
@@ -288,7 +289,7 @@ matrixNode* mread()
 	ClearBuf();
 
 	// error handle
-	if (_ele <= 0 || _row <= 0 || _col <= 0)
+	if (_ele <= 0)
 	{
 		printf("[ERROR] input about size must be positive natural number.\n");
 		return NULL;
@@ -299,7 +300,6 @@ matrixNode* mread()
 		return NULL;
 	}
 	
-
 	matrixNode* out = minit(_row, _col);
 	if (out == NULL) return NULL;
 	out->value = _ele;
@@ -328,6 +328,7 @@ void mwrite(matrixNode* mat)
 	matrixNode* currentNode = mat->down;
 	topNode* currentTop = mat->right.top;
 
+	// find index of matrix
 	int index = -1;
 	for (int i = 0; i < nextEmpty; i++)
 	{
@@ -406,7 +407,7 @@ int MakeEntry(matrixNode* mat, int _row, int _col, int _value)
 		matrixNode* colBefore = NULL;
 		matrixNode* colNext = colTop->down;
 
-		while (newEntry->right.entry == NULL) // sort row
+		while (newEntry->right.entry == NULL) // find proper position of row
 		{
 			if (rowNext != NULL)
 			{
@@ -436,7 +437,7 @@ int MakeEntry(matrixNode* mat, int _row, int _col, int _value)
 			}
 		}
 
-		while (newEntry->down == NULL)
+		while (newEntry->down == NULL) // find proper position of column
 		{
 			if (colNext != NULL)
 			{
@@ -445,7 +446,7 @@ int MakeEntry(matrixNode* mat, int _row, int _col, int _value)
 					newEntry->down = colNext;
 					if (colBefore != NULL) colBefore->down = newEntry;
 					else colTop->down = newEntry;
-				}
+				} // there are no same case
 				else // colNext->row < _row
 				{
 					colBefore = colNext;
